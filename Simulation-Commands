@@ -19,3 +19,84 @@ INSERT INTO students VALUES
 (3, 'Charlie', 'Software Engineering');
 
 SELECT * FROM students;
+
+
+
+mkdir websec-lab
+cd websec-lab
+python -m venv venv
+
+source venv/bin/activate
+pip install flask
+
+from flask import Flask, request, render_template_string
+import sqlite3
+
+app = Flask(__name__)
+
+def init_db():
+    conn = sqlite3.connect("lab.db")
+    conn.execute("DROP TABLE IF EXISTS users")
+    conn.execute("CREATE TABLE users (username TEXT, password TEXT)")
+    conn.execute("INSERT INTO users VALUES ('admin', 'SuperSecret123')")
+    conn.execute("INSERT INTO users VALUES ('student', 'student123')")
+    conn.commit()
+    conn.close()
+
+@app.route("/")
+def home():
+    return render_template_string("""
+    <h1>INFO5995 Web Security Lab</h1>
+
+    <h2>Login</h2>
+    <form action="/login" method="post">
+        <input name="username" placeholder="Username">
+        <input name="password" placeholder="Password" type="password">
+        <button>Login</button>
+    </form>
+
+    <h2>Comments</h2>
+    <form action="/comment" method="post">
+        <input name="comment" placeholder="Enter a comment">
+        <button>Post</button>
+    </form>
+    """)
+
+@app.route("/login", methods=["POST"])
+def login():
+    username = request.form["username"]
+    password = request.form["password"]
+
+    conn = sqlite3.connect("lab.db")
+
+    query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password}'"
+
+    result = conn.execute(query).fetchone()
+
+    if result:
+        return f"<h2>Login successful: {result[0]}</h2>"
+
+    return "<h2>Login failed</h2>"
+
+@app.route("/comment", methods=["POST"])
+def comment():
+    comment = request.form["comment"]
+
+    return render_template_string(f"""
+    <h2>Comment</h2>
+    <p>{comment}</p>
+    <a href="/">Back</a>
+    """)
+
+if __name__ == "__main__":
+    init_db()
+    app.run(host="127.0.0.1", port=5000)
+
+
+website: http://127.0.0.1:5000
+Username: admin
+Password: SuperSecret123
+admin' --
+pass : any
+
+<script>alert("XSS demonstrated")</script>
